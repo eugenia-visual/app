@@ -1,0 +1,68 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './hooks/useAuth'
+import AppLayout from './components/layout/AppLayout'
+import Login from './pages/Login'
+import Panel from './pages/Panel'
+import Clientes from './pages/Clientes'
+import Calendario from './pages/Calendario'
+import Piezas from './pages/Piezas'
+import Efemerides from './pages/Efemerides'
+import Recibos from './pages/Recibos'
+import MiCalendario from './pages/MiCalendario'
+import Ideas from './pages/Ideas'
+import Pendientes from './pages/Pendientes'
+import MisPendientes from './pages/MisPendientes'
+import Pagos from './pages/Pagos'
+import IAImport from './pages/IAImport'
+
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-muted text-sm">Cargando...</div>
+  if (!user) return <Navigate to="/login" replace />
+  return children
+}
+
+function AdminRoute({ children }) {
+  const { user, loading, isAdmin } = useAuth()
+  if (loading) return null
+  if (!user) return <Navigate to="/login" replace />
+  if (!isAdmin) return <Navigate to="/mi-calendario" replace />
+  return children
+}
+
+export default function App() {
+  const { user, loading, isAdmin } = useAuth()
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-muted text-sm">Cargando...</div>
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={user ? <Navigate to={isAdmin ? '/panel' : '/mi-calendario'} replace /> : <Login />} />
+
+        <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          {/* Admin */}
+          <Route path="panel" element={<AdminRoute><Panel /></AdminRoute>} />
+          <Route path="clientes" element={<AdminRoute><Clientes /></AdminRoute>} />
+          <Route path="calendario" element={<AdminRoute><Calendario /></AdminRoute>} />
+          <Route path="piezas" element={<AdminRoute><Piezas /></AdminRoute>} />
+          <Route path="efemerides" element={<AdminRoute><Efemerides /></AdminRoute>} />
+          <Route path="recibos" element={<AdminRoute><Recibos /></AdminRoute>} />
+          <Route path="pendientes" element={<AdminRoute><Pendientes /></AdminRoute>} />
+          <Route path="pagos" element={<AdminRoute><Pagos /></AdminRoute>} />
+          <Route path="ia-import" element={<AdminRoute><IAImport /></AdminRoute>} />
+
+          {/* Cliente */}
+          <Route path="mi-calendario" element={<ProtectedRoute><MiCalendario /></ProtectedRoute>} />
+          <Route path="mis-piezas" element={<ProtectedRoute><Piezas /></ProtectedRoute>} />
+          <Route path="ideas" element={<ProtectedRoute><Ideas /></ProtectedRoute>} />
+          <Route path="mis-pendientes" element={<ProtectedRoute><MisPendientes /></ProtectedRoute>} />
+
+          <Route index element={<Navigate to={isAdmin ? '/panel' : '/mi-calendario'} replace />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
